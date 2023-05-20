@@ -64,11 +64,11 @@ func TestGetMovie(t *testing.T) {
 		return
 	}
 	assert.Equal(t, movie.ImdbRating, float32(8.8))
-	var val uuid.UUID
-	val, err = uuid.Parse("9ca5af9a-fba5-4777-acd7-eb39d720dcad")
+	var id uuid.UUID
+	id, err = uuid.Parse("9ca5af9a-fba5-4777-acd7-eb39d720dcad")
 	if err != nil {
 		t.Fatal(err)
 		return
 	}
-	assert.Equal(t, movie.Id, val)
+	assert.Equal(t, movie.Id, id)
 }

@@ -179,7 +179,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 	for _, actor := range actors {
 		insertActor(actor.Id, actor.Name, actor.Surname, movie.Id)
 	}
-	Body := `{"data":"record inserito con successo"}`
+	Body := `{"data":"movie inserito con successo"}`
 	w.Write([]byte(Body))
 }
 
