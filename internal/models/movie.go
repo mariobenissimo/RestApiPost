@@ -1,4 +1,4 @@
-package main
+package models
 
 import "github.com/google/uuid"
 
@@ -10,15 +10,4 @@ type Movie struct {
 	Actors     []Actor   `json:"actors"`
 	Plot       string    `db:"plot" json:"Plot"`
 	ImdbRating float32   `db:"imdbrating" json:"ImdbRating"`
-}
-
-type Director struct {
-	Id      uuid.UUID `db:"iddirector" json:"Id"`
-	Name    string    `db:"name" json:"Name"`
-	Surname string    `db:"surname" json:"Surname"`
-}
-type Actor struct {
-	Id      uuid.UUID `db:"idactor" json:"Id"`
-	Name    string    `db:"name" json:"Name"`
-	Surname string    `db:"surname" json:"Surname"`
 }
