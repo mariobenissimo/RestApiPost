@@ -14,8 +14,8 @@ func main() {
 	// inizializeService()
 	r := mux.NewRouter()
 	r.HandleFunc("/getMovies", handlers.GetMovies).Methods("GET")
-	r.HandleFunc("/getMovies/{id}", handlers.GetMoviesId).Methods("GET")
-	r.HandleFunc("/createMovies", handlers.Create).Methods("POST")
+	r.HandleFunc("/movies/{id}", handlers.GetMoviesId).Methods("GET")
+	r.HandleFunc("/movies", handlers.Create).Methods("POST")
 	// Bind to a port and pass our router in
 	log.Fatal(http.ListenAndServe(":8000", r))
 }

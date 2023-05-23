@@ -3,12 +3,13 @@ package db
 import (
 	"database/sql"
 	"fmt"
+
+	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
 
 func InizializeDatabase() {
-	// Connessione al database
 	connStr := "host=localhost port=5432 user=mario password=example dbname=mario sslmode=disable"
 	var err error
 
@@ -16,9 +17,7 @@ func InizializeDatabase() {
 	if err != nil {
 		panic(err)
 	}
-	// defer db.Close()
 
-	// Test della connessione
 	err = DB.Ping()
 	if err != nil {
 		panic(err)
