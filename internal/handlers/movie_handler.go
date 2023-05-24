@@ -36,6 +36,34 @@ func GetMoviesId(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(movie)
 	}
 }
+func UpdateMovie(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	var movie models.Movie
+	err := json.NewDecoder(r.Body).Decode(&movie)
+	if err != nil {
+		cancel()
+		panic(err)
+	}
+	services.UpdateMovie(movie, ctx, cancel)
+	if ctx.Err() != nil {
+		json.NewEncoder(w).Encode(`{"error":"timeout"}`)
+	} else {
+		json.NewEncoder(w).Encode(`{"info":"record modificato con successo"}`)
+	}
+}
+func DeleteMovie(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id := params["id"]
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	services.DeleteMovie(id, ctx, cancel)
+	if ctx.Err() != nil {
+		json.NewEncoder(w).Encode(`{"error":"timeout"}`)
+	} else {
+		json.NewEncoder(w).Encode(`{"info":"record inserito con successo"}`)
+	}
+}
 func Create(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()

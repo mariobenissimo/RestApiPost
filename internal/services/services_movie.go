@@ -150,3 +150,85 @@ func GetMovies(ctx context.Context, cancel context.CancelFunc) []models.Movie {
 	}
 	return movies
 }
+func UpdateMovie(movie models.Movie, ctx context.Context, cancel context.CancelFunc) {
+	// must check if the field are correct
+	updateStatement := ` UPDATE movie SET title = $1, year= $2 plot=$3 imdbrating= $4 WHERE idmovie = $5`
+	// Prepare the statement
+	stmt, err := db.DB.Prepare(updateStatement)
+	if err != nil {
+		cancel()
+		panic(err)
+	}
+	defer stmt.Close()
+
+	// Execute the statement with the values
+	_, err = stmt.Exec(movie.Title, movie.Year, movie.Plot, movie.ImdbRating, movie.Id)
+	if err != nil {
+		cancel()
+		panic(err)
+	}
+	updateDirector(movie.Id, movie.Director, ctx, cancel)
+	updateActors(movie.Id, movie.Actors, ctx, cancel)
+	fmt.Println("Record inserted successfully!")
+}
+func updateDirector(id uuid.UUID, director models.Director, ctx context.Context, cancel context.CancelFunc) {
+	updateStatement := ` UPDATE director SET name = $1, surname= $2 fkmovie=$3 WHERE iddirector = $4`
+	// Prepare the statement
+	stmt, err := db.DB.Prepare(updateStatement)
+	if err != nil {
+		cancel()
+		panic(err)
+	}
+	defer stmt.Close()
+
+	// Execute the statement with the values
+	_, err = stmt.Exec(director.Name, director.Surname, id, director.Id)
+	if err != nil {
+		cancel()
+		panic(err)
+	}
+}
+func updateActors(id uuid.UUID, actors []models.Actor, ctx context.Context, cancel context.CancelFunc) {
+	for _, actor := range actors {
+		updateStatement := ` UPDATE actor SET name = $1, surname= $2 fkmovie=$3 WHERE idactor = $4`
+		// Prepare the statement
+		stmt, err := db.DB.Prepare(updateStatement)
+		if err != nil {
+			cancel()
+			panic(err)
+		}
+		defer stmt.Close()
+
+		// Execute the statement with the values
+		_, err = stmt.Exec(actor.Name, actor.Surname, id, actor.Id)
+		if err != nil {
+			cancel()
+			panic(err)
+		}
+	}
+}
+func DeleteMovie(id string, ctx context.Context, cancel context.CancelFunc) {
+	deleteStatement := ` DELETE from movie WHERE idmovie = $1`
+	// Prepare the statement
+	stmt, err := db.DB.Prepare(deleteStatement)
+	if err != nil {
+		cancel()
+		panic(err)
+	}
+	defer stmt.Close()
+
+	// Execute the statement with the values
+	_, err = stmt.Exec(id)
+	if err != nil {
+		cancel()
+		panic(err)
+	}
+}
+func InsertFirstMovie() {
+	id := InsertMovie(uuid.New(), "Inception", "2010", "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.", 8.8, nil, nil)
+	InsertActor(uuid.New(), "Leonardo", "Di Caprio", id, nil, nil)
+	InsertActor(uuid.New(), "Joseph", "Gordon-Levitt", id, nil, nil)
+	InsertActor(uuid.New(), "Ellen", "Page", id, nil, nil)
+	InsertActor(uuid.New(), "Tom", "Hardy", id, nil, nil)
+	InsertDirector(uuid.New(), "Christopher", "Nolan", id, nil, nil)
+}
