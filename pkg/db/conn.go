@@ -2,9 +2,9 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 
 	_ "github.com/lib/pq"
+	"github.com/mariobenissimo/RestApiPost/pkg/logger"
 )
 
 var DB *sql.DB
@@ -15,12 +15,14 @@ func InizializeDatabase() {
 
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
+		logger.WriteLogError("InizializeDatabase", err.Error(), "Error opening Database")
 		panic(err)
 	}
 
 	err = DB.Ping()
 	if err != nil {
+		logger.WriteLogError("InizializeDatabase", err.Error(), "Error contacting Database")
 		panic(err)
 	}
-	fmt.Println("Connessione al database riuscita!")
+	logger.WriteLogInfo("InizializeDatabase", "Connessione al database riuscita!", "Database info")
 }

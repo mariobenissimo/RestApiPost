@@ -9,15 +9,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mariobenissimo/RestApiPost/internal/models"
 	"github.com/mariobenissimo/RestApiPost/internal/services"
+	"github.com/mariobenissimo/RestApiPost/pkg/logger"
 )
 
 func GetMovies(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 	movie := services.GetMovies(ctx, cancel)
-	w.Header().Set("Content-Type", "application/json")
 	if ctx.Err() != nil {
-		json.NewEncoder(w).Encode(`{"error":"timeout"}`)
+		logger.WriteLogRequesWarnWithError(r.Method, r.URL.Path, ctx.Err().Error(), "Timeout on getMovies")
+		json.NewEncoder(w).Encode(models.Response{"Error": "Timeout"})
 	} else {
 		json.NewEncoder(w).Encode(movie)
 	}
@@ -29,9 +30,9 @@ func GetMoviesId(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 	movie := services.GetMovieById(id, ctx, cancel)
-	w.Header().Set("Content-Type", "application/json")
 	if ctx.Err() != nil {
-		json.NewEncoder(w).Encode(`{"error":"timeout"}`)
+		logger.WriteLogRequesWarnWithError(r.Method, r.URL.Path, ctx.Err().Error(), "Timeout on getMoviesId")
+		json.NewEncoder(w).Encode(models.Response{"Error": "Timeout"})
 	} else {
 		json.NewEncoder(w).Encode(movie)
 	}
@@ -43,13 +44,15 @@ func UpdateMovie(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&movie)
 	if err != nil {
 		cancel()
+		logger.WriteLogRequesWarnWithError(r.Method, r.URL.Path, err.Error(), "Error in decode body of request on updatemovie")
 		panic(err)
 	}
 	services.UpdateMovie(movie, ctx, cancel)
 	if ctx.Err() != nil {
-		json.NewEncoder(w).Encode(`{"error":"timeout"}`)
+		logger.WriteLogRequesWarnWithError(r.Method, r.URL.Path, ctx.Err().Error(), "Timeout on updateMovies")
+		json.NewEncoder(w).Encode(models.Response{"Error": "Timeout"})
 	} else {
-		json.NewEncoder(w).Encode(`{"info":"record modificato con successo"}`)
+		json.NewEncoder(w).Encode(models.Response{"Info": "Record modificato con successo"})
 	}
 }
 func DeleteMovie(w http.ResponseWriter, r *http.Request) {
@@ -59,10 +62,14 @@ func DeleteMovie(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	services.DeleteMovie(id, ctx, cancel)
 	if ctx.Err() != nil {
-		json.NewEncoder(w).Encode(`{"error":"timeout"}`)
+		logger.WriteLogRequesWarnWithError(r.Method, r.URL.Path, ctx.Err().Error(), "Timeout on updateMovies")
+		json.NewEncoder(w).Encode(models.Response{"Error": "Timeout"})
 	} else {
-		json.NewEncoder(w).Encode(`{"info":"record inserito con successo"}`)
+		json.NewEncoder(w).Encode(models.Response{"Info": "Record cancellato con successo"})
 	}
+}
+func MovieComp(w http.ResponseWriter, r *http.Request) {
+
 }
 func Create(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
@@ -70,6 +77,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	var movie models.Movie
 	err := json.NewDecoder(r.Body).Decode(&movie)
 	if err != nil {
+		logger.WriteLogRequesWarnWithError(r.Method, r.URL.Path, err.Error(), "Error on decode body in request on create")
 		panic(err)
 	}
 	services.InsertMovie(movie.Id, movie.Title, movie.Year, movie.Plot, movie.ImdbRating, ctx, cancel)
@@ -78,10 +86,10 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	for _, actor := range actors {
 		services.InsertActor(actor.Id, actor.Name, actor.Surname, movie.Id, ctx, cancel)
 	}
-	w.Header().Set("Content-Type", "application/json")
 	if ctx.Err() != nil {
-		json.NewEncoder(w).Encode(`{"error":"timeout"}`)
+		logger.WriteLogRequesWarnWithError(r.Method, r.URL.Path, ctx.Err().Error(), "Timeout on updateMovies")
+		json.NewEncoder(w).Encode(models.Response{"Error": "Timeout"})
 	} else {
-		json.NewEncoder(w).Encode(`{"data":"movie inserito con successo"}`)
+		json.NewEncoder(w).Encode(models.Response{"Info": "Record inserito con successo"})
 	}
 }

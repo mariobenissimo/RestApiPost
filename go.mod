@@ -11,6 +11,7 @@ require (
 require (
 	github.com/apex/log v1.9.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/elastic/go-elasticsearch/v7 v7.17.10 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/lib/pq v1.10.9 // indirect
