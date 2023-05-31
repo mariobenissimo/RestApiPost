@@ -202,6 +202,15 @@ func DeleteMovie(id string, ctx context.Context, cancel context.CancelFunc) {
 		cancel()
 		panic(err)
 	}
+	// TO DO CHECK IF A RECORD EXIST
+	// exists, err := recordExists(db, deleteQuery, recordID)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// if exists {
+
+	// }
 	defer stmt.Close()
 	_, err = stmt.Exec(id)
 	if err != nil {

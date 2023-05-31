@@ -1,4 +1,4 @@
-package testget
+package testdelete
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/mariobenissimo/RestApiPost/internal/handlers"
 	"github.com/mariobenissimo/RestApiPost/internal/models"
@@ -34,10 +33,10 @@ func getToken(router *mux.Router, t *testing.T) string {
 	}
 	return response.Token
 }
-func getMovie(router *mux.Router, t *testing.T, token string) *models.Movie {
-	router.HandleFunc("/movies/{id}", handlers.GetMoviesId)
+func deleteMovie(router *mux.Router, t *testing.T, token string) models.Response {
+	router.HandleFunc("/movies/{id}", handlers.DeleteMovie)
 	url := "/auth/movies/9ca5af9a-fba5-4777-acd7-eb39d720dcad"
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("DELETE", url, nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	if err != nil {
 		t.Fatal(err)
@@ -45,28 +44,22 @@ func getMovie(router *mux.Router, t *testing.T, token string) *models.Movie {
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 	//log.Println(rr.Body)
-	var movie models.Movie
-	err = json.Unmarshal(rr.Body.Bytes(), &movie)
+	var response models.Response
+	err = json.Unmarshal(rr.Body.Bytes(), &response)
 	if err != nil {
 		t.Fatal(err)
 		return nil
 	}
-	return &movie
+	return response
 }
-func TestGetMovie(t *testing.T) {
+func TestDeleteMovie(t *testing.T) {
+	db.InizializeDatabase()
 	r := mux.NewRouter()
 	s := r.PathPrefix("/auth").Subrouter()
 	s.Use(middleware.JwtVerify)
-	db.InizializeDatabase()
 	token := getToken(r, t)
-	movie := getMovie(s, t, token)
-	var id uuid.UUID
-	id, err := uuid.Parse("9ca5af9a-fba5-4777-acd7-eb39d720dcad")
-	if err != nil {
-		t.Fatal(err)
-		return
-	}
-	assert.Equal(t, movie.Id, id)
+	response := deleteMovie(s, t, token)
+	assert.Equal(t, response, models.Response{"Info": "Record cancellato con successo"})
 }
 
 // func TestFooerTableDriven(t *testing.T) {
