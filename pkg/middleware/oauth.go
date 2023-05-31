@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -16,7 +15,6 @@ type favContextKey string
 
 func JwtVerify(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r.Header)
 		var auth = r.Header.Get("Authorization") //Grab the token from the header
 		if auth == "" {
 			w.WriteHeader(http.StatusForbidden)

@@ -3,77 +3,66 @@ package services
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/mariobenissimo/RestApiPost/internal/models"
 	"github.com/mariobenissimo/RestApiPost/pkg/db"
+	"github.com/mariobenissimo/RestApiPost/pkg/logger"
 )
 
 func InsertMovie(id uuid.UUID, title string, year string, plot string, imdbRating float32, ctx context.Context, cancel context.CancelFunc) uuid.UUID {
-	// Define the INSERT statement
 	insertStatement := `INSERT INTO movie (idmovie, title, year, plot, imdbrating) VALUES ($1, $2, $3, $4, $5)`
-
-	// Prepare the statement
 	stmt, err := db.DB.Prepare(insertStatement)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("InserMovie", err.Error(), "Error with statment insert movie")
 		panic(err)
 	}
 	defer stmt.Close()
-
-	// Execute the statement with the values
 	_, err = stmt.Exec(id, title, year, plot, strconv.FormatFloat(float64(imdbRating), 'f', -1, 32))
 	if err != nil {
 		cancel()
+		logger.WriteLogError("InserMovie", err.Error(), "Error with excute insert movie")
 		panic(err)
 	}
-
-	fmt.Println("Record inserted successfully!")
+	logger.WriteLogInfo("InserMovie", "Record insert successfully", "Record inserted")
 	return id
 }
 func InsertActor(id uuid.UUID, name string, surname string, fkmovie uuid.UUID, ctx context.Context, cancel context.CancelFunc) {
-	// Define the INSERT statement
 	insertStatement := `INSERT INTO actor (idactor, name, surname, fkmovie) VALUES ($1, $2, $3, $4)`
-
-	// Prepare the statement
 	stmt, err := db.DB.Prepare(insertStatement)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("InsertActor", err.Error(), "Error with statment insert actor")
 		panic(err)
 	}
 	defer stmt.Close()
-
-	// Execute the statement with the values
 	_, err = stmt.Exec(id, name, surname, fkmovie)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("InsertActor", err.Error(), "Error with statment insert actor")
 		panic(err)
 	}
+	logger.WriteLogInfo("InsertActor", "Record insert successfully", "Record inserted")
 
-	fmt.Println("Record inserted successfully!")
 }
 func InsertDirector(id uuid.UUID, name string, surname string, fkmovie uuid.UUID, ctx context.Context, cancel context.CancelFunc) {
-	// Define the INSERT statement
 	insertStatement := `INSERT INTO director (iddirector, name, surname, fkmovie) VALUES ($1, $2, $3, $4)`
-
-	// Prepare the statement
 	stmt, err := db.DB.Prepare(insertStatement)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("InsertDirector", err.Error(), "Error with statment insert director")
 		panic(err)
 	}
 	defer stmt.Close()
-
-	// Execute the statement with the values
 	_, err = stmt.Exec(id, name, surname, fkmovie)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("InsertDirector", err.Error(), "Error with statment insert director")
 		panic(err)
 	}
-
-	fmt.Println("Record inserted successfully!")
+	logger.WriteLogInfo("InserDirector", "Record insert successfully", "Record inserted")
 }
 
 func GetDirector(id uuid.UUID, ctx context.Context, cancel context.CancelFunc) models.Director {
@@ -82,6 +71,7 @@ func GetDirector(id uuid.UUID, ctx context.Context, cancel context.CancelFunc) m
 	err := db.DB.QueryRow(query, id).Scan(&director.Id, &director.Name, &director.Surname)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("GetDirector", err.Error(), "Error with statment get director")
 		panic(err)
 	}
 	return director
@@ -91,15 +81,17 @@ func GetActors(id uuid.UUID, ctx context.Context, cancel context.CancelFunc) []m
 	rows, err := db.DB.Query(query, id)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("GetActors", err.Error(), "Error with statment get actors")
 		panic(err)
 	}
 	var actors []models.Actor
+	defer rows.Close()
 	for rows.Next() {
-		//fetch actors
 		var actor models.Actor
 		err = rows.Scan(&actor.Id, &actor.Name, &actor.Surname)
 		if err != nil {
 			cancel()
+			logger.WriteLogError("GetActor", err.Error(), "Error with statment get actor")
 			panic(err)
 		}
 		actors = append(actors, actor)
@@ -113,6 +105,7 @@ func GetMovieById(id string, ctx context.Context, cancel context.CancelFunc) mod
 	err := db.DB.QueryRow(query, id).Scan(&movie.Id, &movie.Title, &movie.Year, &movie.Plot, &movie.ImdbRating)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("GetMovieById", err.Error(), "Error with statment get moviebyid")
 		panic(err)
 	}
 	movie.Actors = GetActors(movie.Id, ctx, cancel)
@@ -121,106 +114,99 @@ func GetMovieById(id string, ctx context.Context, cancel context.CancelFunc) mod
 }
 
 func GetMovies(ctx context.Context, cancel context.CancelFunc) []models.Movie {
-	// time.Sleep(10 * time.Second)
 	var rows *sql.Rows
 	var err error
 	rows, err = db.DB.Query("SELECT * FROM movie")
 	if err != nil {
 		cancel()
-		fmt.Println(err)
+		logger.WriteLogError("GetMovies", err.Error(), "Error with statment getmovies")
+		panic(err)
 	}
 	defer rows.Close()
 	var movies []models.Movie
-	// Itera sui risultati della query
 	for rows.Next() {
 		var movie models.Movie
-		// Scansiona i valori delle colonne nella struttura
 		err = rows.Scan(&movie.Id, &movie.Title, &movie.Year, &movie.Plot, &movie.ImdbRating)
 		if err != nil {
+			logger.WriteLogError("GetMovies", err.Error(), "Error with scan rows")
 			panic(err)
 		}
 		movie.Actors = GetActors(movie.Id, ctx, cancel)
 		movie.Director = GetDirector(movie.Id, ctx, cancel)
 		movies = append(movies, movie)
 	}
-
-	if err = rows.Err(); err != nil {
-		cancel()
-		panic(err)
-	}
 	return movies
 }
 func UpdateMovie(movie models.Movie, ctx context.Context, cancel context.CancelFunc) {
-	// must check if the field are correct
 	updateStatement := ` UPDATE movie SET title = $1, year= $2 plot=$3 imdbrating= $4 WHERE idmovie = $5`
-	// Prepare the statement
 	stmt, err := db.DB.Prepare(updateStatement)
 	if err != nil {
+		logger.WriteLogError("UpdateMovie", err.Error(), "Error with statment updatemovie")
 		cancel()
 		panic(err)
 	}
 	defer stmt.Close()
-
-	// Execute the statement with the values
 	_, err = stmt.Exec(movie.Title, movie.Year, movie.Plot, movie.ImdbRating, movie.Id)
 	if err != nil {
+		logger.WriteLogError("UpdateMovie", err.Error(), "Error with exec updatemovie")
 		cancel()
 		panic(err)
 	}
 	updateDirector(movie.Id, movie.Director, ctx, cancel)
 	updateActors(movie.Id, movie.Actors, ctx, cancel)
-	fmt.Println("Record inserted successfully!")
+	logger.WriteLogInfo("UpdateMovie", "Record update successfully!", "record update")
 }
 func updateDirector(id uuid.UUID, director models.Director, ctx context.Context, cancel context.CancelFunc) {
 	updateStatement := ` UPDATE director SET name = $1, surname= $2 fkmovie=$3 WHERE iddirector = $4`
-	// Prepare the statement
 	stmt, err := db.DB.Prepare(updateStatement)
 	if err != nil {
+		logger.WriteLogError("updateDirector", err.Error(), "Error with exec updateDirector")
 		cancel()
 		panic(err)
 	}
 	defer stmt.Close()
-
-	// Execute the statement with the values
 	_, err = stmt.Exec(director.Name, director.Surname, id, director.Id)
 	if err != nil {
+		logger.WriteLogError("updateDirector", err.Error(), "Error with exec updateDirector")
 		cancel()
 		panic(err)
 	}
+	logger.WriteLogInfo("updateDirector", "Record update successfully!", "record update")
+
 }
 func updateActors(id uuid.UUID, actors []models.Actor, ctx context.Context, cancel context.CancelFunc) {
-	for _, actor := range actors {
+	for index, actor := range actors {
 		updateStatement := ` UPDATE actor SET name = $1, surname= $2 fkmovie=$3 WHERE idactor = $4`
-		// Prepare the statement
 		stmt, err := db.DB.Prepare(updateStatement)
 		if err != nil {
 			cancel()
+			logger.WriteLogError("updateActors", err.Error(), "Error with statment "+strconv.Itoa(index))
 			panic(err)
 		}
 		defer stmt.Close()
-
-		// Execute the statement with the values
 		_, err = stmt.Exec(actor.Name, actor.Surname, id, actor.Id)
 		if err != nil {
 			cancel()
+			logger.WriteLogError("updateActors", err.Error(), "Error with exec updateDirector"+strconv.Itoa(index))
 			panic(err)
 		}
 	}
+	logger.WriteLogInfo("updateActors", "Record update successfully!", "all record update")
+
 }
 func DeleteMovie(id string, ctx context.Context, cancel context.CancelFunc) {
 	deleteStatement := ` DELETE from movie WHERE idmovie = $1`
-	// Prepare the statement
 	stmt, err := db.DB.Prepare(deleteStatement)
 	if err != nil {
+		logger.WriteLogError("DeleteMovie", err.Error(), "Error with statment deleteDirector")
 		cancel()
 		panic(err)
 	}
 	defer stmt.Close()
-
-	// Execute the statement with the values
 	_, err = stmt.Exec(id)
 	if err != nil {
 		cancel()
+		logger.WriteLogError("DeleteMovie", err.Error(), "Error with exec deleteDirector")
 		panic(err)
 	}
 }
