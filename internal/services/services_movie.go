@@ -194,7 +194,22 @@ func updateActors(id uuid.UUID, actors []models.Actor, ctx context.Context, canc
 	logger.WriteLogInfo("updateActors", "Record update successfully!", "all record update")
 
 }
-func DeleteMovie(id string, ctx context.Context, cancel context.CancelFunc) {
+func recordExists(id string, ctx context.Context, cancel context.CancelFunc) bool {
+	selectQuery := "SELECT * FROM movie WHERE idmovie = $1 LIMIT 1"
+	rows, err := db.DB.Query(selectQuery, id)
+	if err != nil {
+		cancel()
+		logger.WriteLogError("recordExists", err.Error(), "Error with statment recordExists")
+		panic(err)
+	}
+	defer rows.Close()
+	return rows.Next()
+}
+func DeleteMovie(id string, ctx context.Context, cancel context.CancelFunc) bool {
+	exists := recordExists(id, ctx, cancel)
+	if !exists {
+		return false
+	}
 	deleteStatement := ` DELETE from movie WHERE idmovie = $1`
 	stmt, err := db.DB.Prepare(deleteStatement)
 	if err != nil {
@@ -202,15 +217,6 @@ func DeleteMovie(id string, ctx context.Context, cancel context.CancelFunc) {
 		cancel()
 		panic(err)
 	}
-	// TO DO CHECK IF A RECORD EXIST
-	// exists, err := recordExists(db, deleteQuery, recordID)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// if exists {
-
-	// }
 	defer stmt.Close()
 	_, err = stmt.Exec(id)
 	if err != nil {
@@ -218,6 +224,7 @@ func DeleteMovie(id string, ctx context.Context, cancel context.CancelFunc) {
 		logger.WriteLogError("DeleteMovie", err.Error(), "Error with exec deleteDirector")
 		panic(err)
 	}
+	return true
 }
 func InsertFirstMovie() {
 	id := InsertMovie(uuid.New(), "Inception", "2010", "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.", 8.8, nil, nil)

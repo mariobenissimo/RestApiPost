@@ -60,12 +60,15 @@ func DeleteMovie(w http.ResponseWriter, r *http.Request) {
 	id := params["id"]
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
-	services.DeleteMovie(id, ctx, cancel)
+	recordCancelled := services.DeleteMovie(id, ctx, cancel)
 	if ctx.Err() != nil {
 		logger.WriteLogRequesWarnWithError(r.Method, r.URL.Path, ctx.Err().Error(), "Timeout on updateMovies")
 		json.NewEncoder(w).Encode(models.Response{"Error": "Timeout"})
-	} else {
+	}
+	if recordCancelled {
 		json.NewEncoder(w).Encode(models.Response{"Info": "Record cancellato con successo"})
+	} else {
+		json.NewEncoder(w).Encode(models.Response{"Info": "Nessun record"})
 	}
 }
 func MovieComp(w http.ResponseWriter, r *http.Request) {
